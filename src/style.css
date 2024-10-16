@@ -43,6 +43,22 @@ h1 {
   box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+#clearButton {
+  display: block;
+  margin: 10px auto;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#clearButton:hover {
+  background-color: #d32f2f;
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;
