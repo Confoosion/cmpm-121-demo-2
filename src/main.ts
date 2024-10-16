@@ -1,5 +1,8 @@
 import "./style.css";
 
+type Point = { x: number; y: number };
+type Stroke = Point[];
+
 const APP_NAME = "Game";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -24,37 +27,63 @@ clearButton.innerText = "Clear";
 clearButton.id = "clearButton";
 app.appendChild(clearButton);
 
-const ctx = canvas.getContext("2d");
-let drawing = false;
+const canvasContext = canvas.getContext("2d");
+let strokes: Stroke[] = [];
+let currentStroke: Stroke | null = null;
 
-// DRAW EVENT
+// MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
-  drawing = true;
-  ctx?.beginPath();
-  ctx?.moveTo(e.offsetX, e.offsetY);
+    currentStroke = [{ x: e.offsetX, y: e.offsetY }];
 });
 
-// CREATE LINE EVENT
+// MOUSE MOVEMENT
 canvas.addEventListener("mousemove", (e) => {
-  if (drawing) {
-    ctx?.lineTo(e.offsetX, e.offsetY);
-    ctx?.stroke();
-  }
+    if (currentStroke) {
+        currentStroke.push({ x: e.offsetX, y: e.offsetY });
+        canvas.dispatchEvent(new Event("drawing-changed"));
+    }
 });
 
-// DONE DRAWING EVENT
+// MOUSE UP
 canvas.addEventListener("mouseup", () => {
-  drawing = false;
-  ctx?.closePath();
+    if (currentStroke) {
+        strokes.push(currentStroke);
+        currentStroke = null;
+        canvas.dispatchEvent(new Event("drawing-changed"));
+    }
 });
 
 // MOUSE NOT IN CANVAS EVENT
 canvas.addEventListener("mouseleave", () => {
-  drawing = false;
-  ctx?.closePath();
+    if (currentStroke) {
+        strokes.push(currentStroke);
+        currentStroke = null;
+        canvas.dispatchEvent(new Event("drawing-changed"));
+    }
 });
+
+// drawing-changed EVENT
+canvas.addEventListener("drawing-changed", () => {
+    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
+  
+    // REDRAW
+    strokes.forEach((stroke) => {
+      canvasContext?.beginPath();
+      for (let i = 0; i < stroke.length; i++) {
+        const point = stroke[i];
+        if (i === 0) {
+          canvasContext?.moveTo(point.x, point.y);
+        } else {
+          canvasContext?.lineTo(point.x, point.y);
+        }
+      }
+      canvasContext?.stroke();
+      canvasContext?.closePath();
+    });
+  });
 
 // CLEAR BUTTON EVENT
 clearButton.addEventListener("click", () => {
-  ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    strokes = [];
+    canvas.dispatchEvent(new Event("drawing-changed"));
 });
