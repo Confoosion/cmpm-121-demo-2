@@ -27,8 +27,21 @@ clearButton.innerText = "Clear";
 clearButton.id = "clearButton";
 app.appendChild(clearButton);
 
+// UNDO BUTTON
+const undoButton = document.createElement("button");
+undoButton.innerText = "Undo";
+undoButton.id = "undoButton";
+app.appendChild(undoButton);
+
+// REDO BUTTON
+const redoButton = document.createElement("button");
+redoButton.innerText = "Redo";
+redoButton.id = "redoButton";
+app.appendChild(redoButton);
+
 const canvasContext = canvas.getContext("2d");
 let strokes: Stroke[] = [];
+let redoStack: Stroke[] = [];
 let currentStroke: Stroke | null = null;
 
 // MOUSE DOWN
@@ -49,6 +62,7 @@ canvas.addEventListener("mouseup", () => {
     if (currentStroke) {
         strokes.push(currentStroke);
         currentStroke = null;
+        redoStack = [];
         canvas.dispatchEvent(new Event("drawing-changed"));
     }
 });
@@ -58,6 +72,7 @@ canvas.addEventListener("mouseleave", () => {
     if (currentStroke) {
         strokes.push(currentStroke);
         currentStroke = null;
+        redoStack = [];
         canvas.dispatchEvent(new Event("drawing-changed"));
     }
 });
@@ -85,5 +100,28 @@ canvas.addEventListener("drawing-changed", () => {
 // CLEAR BUTTON EVENT
 clearButton.addEventListener("click", () => {
     strokes = [];
+    redoStack = [];
     canvas.dispatchEvent(new Event("drawing-changed"));
+});
+
+// UNDO BUTTON EVENT
+undoButton.addEventListener("click", () => {
+    if (strokes.length > 0) {
+        const undoneStroke = strokes.pop();
+        if (undoneStroke) {
+            redoStack.push(undoneStroke);
+            canvas.dispatchEvent(new Event("drawing-changed"));
+        }
+    }
+});
+
+// REDO BUTTON EVENT
+redoButton.addEventListener("click", () => {
+    if (redoStack.length > 0) {
+        const redoneStroke = redoStack.pop();
+        if (redoneStroke) {
+            strokes.push(redoneStroke);
+            canvas.dispatchEvent(new Event("drawing-changed"));
+        }
+    }
 });
