@@ -29,6 +29,32 @@ class MarkerLine {
   }
 }
 
+class ToolPreview {
+    x: number;
+    y: number;
+    thickness: number;
+  
+    constructor(x: number, y: number, thickness: number) {
+      this.x = x;
+      this.y = y;
+      this.thickness = thickness;
+    }
+  
+    updatePosition(x: number, y: number) {
+      this.x = x;
+      this.y = y;
+    }
+  
+    display(canvasContext: CanvasRenderingContext2D) {
+      canvasContext.beginPath();
+      canvasContext.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
+      canvasContext.strokeStyle = "gray";
+      canvasContext.lineWidth = 1;
+      canvasContext.stroke();
+      canvasContext.closePath();
+    }
+}
+
 const APP_NAME = "Game";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -82,17 +108,20 @@ const canvasContext = canvas.getContext("2d");
 let strokes: MarkerLine[] = [];
 let redoStack: MarkerLine[] = [];
 let currentStroke: MarkerLine | null = null;
-let currentThickness = 1;
+let currentThickness = 5;
+let toolPreview: ToolPreview | null = null;
 
 // THIN BUTTON EVENT
 thinButton.addEventListener("click", () => {
-    currentThickness = 1;
+    currentThickness = 5;
+    toolPreview = new ToolPreview(0, 0, currentThickness);
     updateSelectedTool(thinButton);
 });
 
 // THICK BUTTON EVENT
 thickButton.addEventListener("click", () => {
-    currentThickness = 5;
+    currentThickness = 10;
+    toolPreview = new ToolPreview(0, 0, currentThickness);
     updateSelectedTool(thickButton);
 });
 
@@ -107,13 +136,23 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
     currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
+    toolPreview = null;
 });
 
 // MOUSE MOVEMENT
 canvas.addEventListener("mousemove", (e) => {
-    if (currentStroke) {
+    if(currentStroke) {
         currentStroke.drag(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new Event("drawing-changed"));
+    }
+    else {
+        if(!toolPreview) {
+            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness);
+        }
+        else {
+            toolPreview.updatePosition(e.offsetX, e.offsetY);
+        }
+        canvas.dispatchEvent(new Event("tool-moved"));
     }
 });
 
@@ -139,11 +178,28 @@ canvas.addEventListener("mouseleave", () => {
 
 // drawing-changed EVENT
 canvas.addEventListener("drawing-changed", () => {
-        canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
+    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
 
-        strokes.forEach((stroke) => {
+    strokes.forEach((stroke) => {
         stroke.display(canvasContext!);
     });
+
+    if(currentStroke) {
+        currentStroke.display(canvasContext!);
+    }
+
+    toolPreview?.display(canvasContext!);
+});
+
+// tool-moved EVENT
+canvas.addEventListener("tool-moved", () => {
+    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
+  
+    strokes.forEach((stroke) => {
+      stroke.display(canvasContext!);
+    });
+  
+    toolPreview?.display(canvasContext!);
 });
 
 // CLEAR BUTTON EVENT
