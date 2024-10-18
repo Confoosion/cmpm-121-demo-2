@@ -55,6 +55,32 @@ class ToolPreview {
     }
 }
 
+class Sticker {
+    x: number;
+    y: number;
+    sticker: string;
+
+    constructor(x: number, y: number, sticker: string) {
+        this.x = x;
+        this.y = y;
+        this.sticker = sticker;
+    }
+
+    drag(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    display(canvasContext: CanvasRenderingContext2D) {
+        canvasContext.font = "40px serif";
+        canvasContext.fillText(this.sticker, this.x, this.y);
+
+        canvasContext.strokeStyle = "gray";
+        canvasContext.lineWidth = 1;
+        canvasContext.strokeText(this.sticker, this.x, this.y);
+    }
+}
+
 const APP_NAME = "Game";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
@@ -86,6 +112,22 @@ thickButton.innerText = "Thick";
 thickButton.id = "thickButton";
 app.appendChild(thickButton);
 
+// STICKER BUTTONS
+const stickerButton1 = document.createElement("button");
+stickerButton1.innerText = "😊";
+stickerButton1.id = "stickerButton1";
+app.appendChild(stickerButton1);
+
+const stickerButton2 = document.createElement("button");
+stickerButton2.innerText = "💩";
+stickerButton2.id = "stickerButton2";
+app.appendChild(stickerButton2);
+
+const stickerButton3 = document.createElement("button");
+stickerButton3.innerText = "👍";
+stickerButton3.id = "stickerButton3";
+app.appendChild(stickerButton3);
+
 // CLEAR BUTTON
 const clearButton = document.createElement("button");
 clearButton.innerText = "Clear";
@@ -110,6 +152,9 @@ let redoStack: MarkerLine[] = [];
 let currentStroke: MarkerLine | null = null;
 let currentThickness = 5;
 let toolPreview: ToolPreview | null = null;
+let currentSticker: string | null = null;
+let displaySticker: Sticker | null = null;
+let placedStickers: Sticker[] = [];
 
 // THIN BUTTON EVENT
 thinButton.addEventListener("click", () => {
@@ -133,23 +178,52 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
     selectedButton.classList.add("selectedTool");
 }
 
+// STICKER BUTTON EVENTS
+stickerButton1.addEventListener("click", () => {
+    currentSticker = "😊";
+    displaySticker = null;
+});
+
+stickerButton2.addEventListener("click", () => {
+    currentSticker = "💩";
+    displaySticker = null;
+});
+
+stickerButton3.addEventListener("click", () => {
+    currentSticker = "👍";
+    displaySticker = null;
+});
+
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
-    currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
-    toolPreview = null;
+    if(!currentSticker) {
+        currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
+        toolPreview = null;
+    }
+    else {
+        displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker);
+        placedStickers.push(displaySticker);
+        currentSticker = null;
+        canvas.dispatchEvent(new Event("drawing-changed"));
+    }
 });
 
 // MOUSE MOVEMENT
 canvas.addEventListener("mousemove", (e) => {
-    if(currentStroke) {
+    if (currentStroke) {
         currentStroke.drag(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new Event("drawing-changed"));
-    }
-    else {
-        if(!toolPreview) {
-            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness);
+    } else if (currentSticker) {
+        if (!displaySticker) {
+            displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker);
+        } else {
+            displaySticker.drag(e.offsetX, e.offsetY);
         }
-        else {
+        canvas.dispatchEvent(new Event("tool-moved"));
+    } else {
+        if (!toolPreview) {
+            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness);
+        } else {
             toolPreview.updatePosition(e.offsetX, e.offsetY);
         }
         canvas.dispatchEvent(new Event("tool-moved"));
@@ -189,6 +263,14 @@ canvas.addEventListener("drawing-changed", () => {
     }
 
     toolPreview?.display(canvasContext!);
+
+    if (displaySticker) {
+        displaySticker.display(canvasContext!);
+    }
+
+    placedStickers.forEach((sticker) => {
+        sticker.display(canvasContext!);
+    });
 });
 
 // tool-moved EVENT
@@ -199,13 +281,24 @@ canvas.addEventListener("tool-moved", () => {
       stroke.display(canvasContext!);
     });
   
+    placedStickers.forEach((sticker) => {
+        sticker.display(canvasContext!);
+    });
+
     toolPreview?.display(canvasContext!);
+
+    if (currentSticker && displaySticker) {
+        displaySticker.display(canvasContext!);
+    }
 });
 
 // CLEAR BUTTON EVENT
 clearButton.addEventListener("click", () => {
     strokes = [];
     redoStack = [];
+    placedStickers = [];
+    currentSticker = null;
+    displaySticker = null;
     canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
