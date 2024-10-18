@@ -1,7 +1,33 @@
 import "./style.css";
 
-type Point = { x: number; y: number };
-type Stroke = Point[];
+class MarkerLine {
+    points: { x: number; y: number }[];
+
+  constructor(initialX: number, initialY: number) {
+    this.points = [{ x: initialX, y: initialY }];
+  }
+
+  drag(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+
+  display(canvasContext: CanvasRenderingContext2D) {
+    if (this.points.length === 0) return;
+
+    canvasContext.beginPath();
+    canvasContext.moveTo(this.points[0].x, this.points[0].y);
+
+    for (let i = 1; i < this.points.length; i++) {
+      canvasContext.lineTo(this.points[i].x, this.points[i].y);
+    }
+
+    canvasContext.stroke();
+    canvasContext.closePath();
+  }
+}
+
+// type Point = { x: number; y: number };
+// type Stroke = Point[];
 
 const APP_NAME = "Game";
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -40,19 +66,19 @@ redoButton.id = "redoButton";
 app.appendChild(redoButton);
 
 const canvasContext = canvas.getContext("2d");
-let strokes: Stroke[] = [];
-let redoStack: Stroke[] = [];
-let currentStroke: Stroke | null = null;
+let strokes: MarkerLine[] = [];
+let redoStack: MarkerLine[] = [];
+let currentStroke: MarkerLine | null = null;
 
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
-    currentStroke = [{ x: e.offsetX, y: e.offsetY }];
+    currentStroke = new MarkerLine(e.offsetX, e.offsetY);
 });
 
 // MOUSE MOVEMENT
 canvas.addEventListener("mousemove", (e) => {
     if (currentStroke) {
-        currentStroke.push({ x: e.offsetX, y: e.offsetY });
+        currentStroke.drag(e.offsetX, e.offsetY);
         canvas.dispatchEvent(new Event("drawing-changed"));
     }
 });
@@ -79,23 +105,12 @@ canvas.addEventListener("mouseleave", () => {
 
 // drawing-changed EVENT
 canvas.addEventListener("drawing-changed", () => {
-    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
-  
-    // REDRAW
-    strokes.forEach((stroke) => {
-      canvasContext?.beginPath();
-      for (let i = 0; i < stroke.length; i++) {
-        const point = stroke[i];
-        if (i === 0) {
-          canvasContext?.moveTo(point.x, point.y);
-        } else {
-          canvasContext?.lineTo(point.x, point.y);
-        }
-      }
-      canvasContext?.stroke();
-      canvasContext?.closePath();
+        canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
+
+        strokes.forEach((stroke) => {
+        stroke.display(canvasContext!);
     });
-  });
+});
 
 // CLEAR BUTTON EVENT
 clearButton.addEventListener("click", () => {
