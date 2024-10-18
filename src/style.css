@@ -80,6 +80,24 @@ button {
   background-color: #388E3C;
 }
 
+#thinButton {
+  background-color: #FFC107;
+  color: white;
+}
+
+#thickButton {
+  background-color: #FF5722;
+  color: white;
+}
+
+#thinButton:hover, #thickButton:hover {
+  opacity: 0.8;
+}
+
+.selectedTool {
+  border: 2px solid white;
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;
