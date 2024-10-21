@@ -48,7 +48,7 @@ class ToolPreview {
     display(canvasContext: CanvasRenderingContext2D) {
       canvasContext.beginPath();
       canvasContext.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
-      canvasContext.strokeStyle = "gray";
+      canvasContext.strokeStyle = "black";
       canvasContext.lineWidth = 1;
       canvasContext.stroke();
       canvasContext.closePath();
@@ -75,7 +75,7 @@ class Sticker {
         canvasContext.font = "40px serif";
         canvasContext.fillText(this.sticker, this.x, this.y);
 
-        canvasContext.strokeStyle = "gray";
+        canvasContext.strokeStyle = "black";
         canvasContext.lineWidth = 1;
         canvasContext.strokeText(this.sticker, this.x, this.y);
     }
@@ -148,6 +148,7 @@ customStickerButton.addEventListener("click", () => {
         app.appendChild(clearButton);
         app.appendChild(undoButton);
         app.appendChild(redoButton);
+        app.appendChild(exportButton);
     }
 });
 app.appendChild(customStickerButton);
@@ -329,5 +330,37 @@ redoButton.addEventListener("click", () => {
             strokes.push(redoneStroke);
             canvas.dispatchEvent(new Event("drawing-changed"));
         }
+    }
+});
+
+// EXPORT BUTTON
+const exportButton = document.createElement("button");
+exportButton.innerText = "Export";
+exportButton.id = "exportButton";
+app.appendChild(exportButton);
+
+// EXPORT BUTTON EVENT
+exportButton.addEventListener("click", () => {
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = 1024;
+    exportCanvas.height = 1024;
+    const exportContext = exportCanvas.getContext("2d");
+
+    if (exportContext) {
+        exportContext.scale(4, 4);
+
+        strokes.forEach((stroke) => {
+            stroke.display(exportContext);
+        });
+
+        placedStickers.forEach((sticker) => {
+            sticker.display(exportContext);
+        });
+
+        // Trigger download as a PNG
+        const anchor = document.createElement("a");
+        anchor.href = exportCanvas.toDataURL("image/png");
+        anchor.download = "sketchpad.png";
+        anchor.click();
     }
 });
