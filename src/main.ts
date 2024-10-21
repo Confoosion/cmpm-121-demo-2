@@ -3,10 +3,12 @@ import "./style.css";
 class MarkerLine {
     points: { x: number; y: number }[];
     thickness: number;
+    color: string;
 
-  constructor(initialX: number, initialY: number, thickness: number) {
+  constructor(initialX: number, initialY: number, thickness: number, color: string) {
     this.points = [{ x: initialX, y: initialY }];
     this.thickness = thickness;
+    this.color = color;
   }
 
   drag(x: number, y: number) {
@@ -17,6 +19,7 @@ class MarkerLine {
     if (this.points.length === 0) return;
 
     canvasContext.lineWidth = this.thickness;
+    canvasContext.strokeStyle = this.color;
     canvasContext.beginPath();
     canvasContext.moveTo(this.points[0].x, this.points[0].y);
 
@@ -33,22 +36,29 @@ class ToolPreview {
     x: number;
     y: number;
     thickness: number;
+    rotation: number;
   
-    constructor(x: number, y: number, thickness: number) {
+    constructor(x: number, y: number, thickness: number, rotation: number) {
       this.x = x;
       this.y = y;
       this.thickness = thickness;
+      this.rotation = rotation;
     }
   
     updatePosition(x: number, y: number) {
       this.x = x;
       this.y = y;
     }
+
+    updateRotation(rotation: number) {
+      this.rotation = rotation;
+    }
   
     display(canvasContext: CanvasRenderingContext2D) {
       canvasContext.beginPath();
       canvasContext.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
       canvasContext.strokeStyle = "black";
+      canvasContext.rotate((this.rotation * Math.PI) / 180);
       canvasContext.lineWidth = 1;
       canvasContext.stroke();
       canvasContext.closePath();
@@ -59,11 +69,13 @@ class Sticker {
     x: number;
     y: number;
     sticker: string;
+    rotation: number;
 
-    constructor(x: number, y: number, sticker: string) {
+    constructor(x: number, y: number, sticker: string, rotation: number) {
         this.x = x;
         this.y = y;
         this.sticker = sticker;
+        this.rotation = rotation;
     }
 
     drag(x: number, y: number) {
@@ -72,12 +84,18 @@ class Sticker {
     }
 
     display(canvasContext: CanvasRenderingContext2D) {
-        canvasContext.font = "40px serif";
-        canvasContext.fillText(this.sticker, this.x, this.y);
+        canvasContext.save();
 
+        canvasContext.translate(this.x, this.y);
+        canvasContext.rotate((this.rotation * Math.PI) / 180);
+
+        canvasContext.font = "40px serif";
+        canvasContext.fillText(this.sticker, 0, 0);
         canvasContext.strokeStyle = "black";
         canvasContext.lineWidth = 1;
-        canvasContext.strokeText(this.sticker, this.x, this.y);
+        canvasContext.strokeText(this.sticker, 0, 0);
+
+        canvasContext.restore();
     }
 }
 
@@ -85,7 +103,6 @@ const APP_NAME = "Drawing Board";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
-// app.innerHTML = APP_NAME;
 
 // TITLE
 const title = document.createElement("h1");
@@ -119,6 +136,12 @@ thickButton.innerText = "Thick";
 thickButton.id = "thickButton";
 leftButtonContainer.appendChild(thickButton);
 
+// COLOR PICKER
+const colorPicker = document.createElement("input");
+colorPicker.type = "color";
+colorPicker.value = "#000000";
+leftButtonContainer.appendChild(colorPicker);
+
 layoutContainer.appendChild(canvas);
 
 const rightButtonContainer = document.createElement("div");
@@ -136,9 +159,15 @@ function createStickerButtons() {
         stickerButton.addEventListener("click", () => {
             currentSticker = sticker;
             displaySticker = null;
+            randomizeStickerRotation();
         });
         rightButtonContainer.appendChild(stickerButton);
     });
+}
+
+function randomizeStickerRotation() {
+    const randomRotation = Math.floor(Math.random() * 360);
+    displaySticker = new Sticker(0, 0, currentSticker!, randomRotation);
 }
 
 createStickerButtons();
@@ -193,14 +222,14 @@ let placedStickers: Sticker[] = [];
 // THIN BUTTON EVENT
 thinButton.addEventListener("click", () => {
     currentThickness = 5;
-    toolPreview = new ToolPreview(0, 0, currentThickness);
+    toolPreview = new ToolPreview(0, 0, currentThickness, 0);
     updateSelectedTool(thinButton);
 });
 
 // THICK BUTTON EVENT
 thickButton.addEventListener("click", () => {
     currentThickness = 10;
-    toolPreview = new ToolPreview(0, 0, currentThickness);
+    toolPreview = new ToolPreview(0, 0, currentThickness, 0);
     updateSelectedTool(thickButton);
 });
 
@@ -215,11 +244,12 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
     if(!currentSticker) {
-        currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
+        const selectedColor = colorPicker.value;
+        currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness, selectedColor);
         toolPreview = null;
     }
     else {
-        displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker);
+        displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker, displaySticker!.rotation);
         placedStickers.push(displaySticker);
         currentSticker = null;
         canvas.dispatchEvent(new Event("drawing-changed"));
@@ -233,14 +263,14 @@ canvas.addEventListener("mousemove", (e) => {
         canvas.dispatchEvent(new Event("drawing-changed"));
     } else if (currentSticker) {
         if (!displaySticker) {
-            displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker);
+            displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker, displaySticker!.rotation);
         } else {
             displaySticker.drag(e.offsetX, e.offsetY);
         }
         canvas.dispatchEvent(new Event("tool-moved"));
     } else {
         if (!toolPreview) {
-            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness);
+            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness, toolPreview!.rotation);
         } else {
             toolPreview.updatePosition(e.offsetX, e.offsetY);
         }
