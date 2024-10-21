@@ -112,21 +112,45 @@ thickButton.innerText = "Thick";
 thickButton.id = "thickButton";
 app.appendChild(thickButton);
 
+// STICKERS
+let stickers: string[] = ["😊", "💩", "👍"];
+
+function createStickerButtons() {
+    stickers.forEach((sticker, index) => {
+        const stickerButton = document.createElement("button");
+        stickerButton.innerText = sticker;
+        stickerButton.id = `stickerButton${index}`;
+        stickerButton.addEventListener("click", () => {
+            currentSticker = sticker;
+            displaySticker = null;
+        });
+        app.appendChild(stickerButton);
+    });
+}
+
+createStickerButtons();
+
 // STICKER BUTTONS
-const stickerButton1 = document.createElement("button");
-stickerButton1.innerText = "😊";
-stickerButton1.id = "stickerButton1";
-app.appendChild(stickerButton1);
-
-const stickerButton2 = document.createElement("button");
-stickerButton2.innerText = "💩";
-stickerButton2.id = "stickerButton2";
-app.appendChild(stickerButton2);
-
-const stickerButton3 = document.createElement("button");
-stickerButton3.innerText = "👍";
-stickerButton3.id = "stickerButton3";
-app.appendChild(stickerButton3);
+const customStickerButton = document.createElement("button");
+customStickerButton.innerText = "Add Custom Sticker";
+customStickerButton.id = "customStickerButton";
+customStickerButton.addEventListener("click", () => {
+    const userSticker = prompt("Enter your custom sticker:", "");
+    if (userSticker) {
+        stickers.push(userSticker);
+        app.innerHTML = ""; // Clear the existing UI
+        app.appendChild(title);
+        app.appendChild(canvas);
+        app.appendChild(thinButton);
+        app.appendChild(thickButton);
+        createStickerButtons(); // Recreate buttons with the new sticker
+        app.appendChild(customStickerButton);
+        app.appendChild(clearButton);
+        app.appendChild(undoButton);
+        app.appendChild(redoButton);
+    }
+});
+app.appendChild(customStickerButton);
 
 // CLEAR BUTTON
 const clearButton = document.createElement("button");
@@ -177,22 +201,6 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
     });
     selectedButton.classList.add("selectedTool");
 }
-
-// STICKER BUTTON EVENTS
-stickerButton1.addEventListener("click", () => {
-    currentSticker = "😊";
-    displaySticker = null;
-});
-
-stickerButton2.addEventListener("click", () => {
-    currentSticker = "💩";
-    displaySticker = null;
-});
-
-stickerButton3.addEventListener("click", () => {
-    currentSticker = "👍";
-    displaySticker = null;
-});
 
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
