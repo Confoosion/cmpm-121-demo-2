@@ -81,36 +81,49 @@ class Sticker {
     }
 }
 
-const APP_NAME = "Game";
+const APP_NAME = "Drawing Board";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
 document.title = APP_NAME;
-app.innerHTML = APP_NAME;
+// app.innerHTML = APP_NAME;
 
 // TITLE
 const title = document.createElement("h1");
 title.innerText = APP_NAME;
 app.appendChild(title);
 
+const layoutContainer = document.createElement("div");
+layoutContainer.id = "layoutContainer";
+app.appendChild(layoutContainer);
+
+const leftButtonContainer = document.createElement("div");
+leftButtonContainer.id = "leftButtonContainer";
+layoutContainer.appendChild(leftButtonContainer);
+
 // DRAWING CANVAS
 const canvas = document.createElement("canvas");
 canvas.width = 256;
 canvas.height = 256;
 canvas.id = "gameCanvas";
-app.appendChild(canvas);
 
 // THIN BUTTON
 const thinButton = document.createElement("button");
 thinButton.innerText = "Thin";
 thinButton.id = "thinButton";
 thinButton.classList.add("selectedTool");
-app.appendChild(thinButton);
+leftButtonContainer.appendChild(thinButton);
 
 // THICK BUTTON
 const thickButton = document.createElement("button");
 thickButton.innerText = "Thick";
 thickButton.id = "thickButton";
-app.appendChild(thickButton);
+leftButtonContainer.appendChild(thickButton);
+
+layoutContainer.appendChild(canvas);
+
+const rightButtonContainer = document.createElement("div");
+rightButtonContainer.id = "rightButtonContainer";
+layoutContainer.appendChild(rightButtonContainer);
 
 // STICKERS
 let stickers: string[] = ["😊", "💩", "👍"];
@@ -124,7 +137,7 @@ function createStickerButtons() {
             currentSticker = sticker;
             displaySticker = null;
         });
-        app.appendChild(stickerButton);
+        rightButtonContainer.appendChild(stickerButton);
     });
 }
 
@@ -138,38 +151,34 @@ customStickerButton.addEventListener("click", () => {
     const userSticker = prompt("Enter your custom sticker:", "");
     if (userSticker) {
         stickers.push(userSticker);
-        app.innerHTML = ""; // Clear the existing UI
-        app.appendChild(title);
-        app.appendChild(canvas);
-        app.appendChild(thinButton);
-        app.appendChild(thickButton);
-        createStickerButtons(); // Recreate buttons with the new sticker
-        app.appendChild(customStickerButton);
-        app.appendChild(clearButton);
-        app.appendChild(undoButton);
-        app.appendChild(redoButton);
-        app.appendChild(exportButton);
+        rightButtonContainer.innerHTML = "";
+        createStickerButtons();
+        rightButtonContainer.appendChild(customStickerButton);
     }
 });
-app.appendChild(customStickerButton);
+rightButtonContainer.appendChild(customStickerButton);
 
-// CLEAR BUTTON
-const clearButton = document.createElement("button");
-clearButton.innerText = "Clear";
-clearButton.id = "clearButton";
-app.appendChild(clearButton);
+const bottomButtonContainer = document.createElement("div");
+bottomButtonContainer.id = "bottomButtonContainer";
+layoutContainer.appendChild(bottomButtonContainer);
 
 // UNDO BUTTON
 const undoButton = document.createElement("button");
 undoButton.innerText = "Undo";
 undoButton.id = "undoButton";
-app.appendChild(undoButton);
+bottomButtonContainer.appendChild(undoButton);
 
 // REDO BUTTON
 const redoButton = document.createElement("button");
 redoButton.innerText = "Redo";
 redoButton.id = "redoButton";
-app.appendChild(redoButton);
+bottomButtonContainer.appendChild(redoButton);
+
+// CLEAR BUTTON
+const clearButton = document.createElement("button");
+clearButton.innerText = "Clear";
+clearButton.id = "clearButton";
+bottomButtonContainer.appendChild(clearButton);
 
 const canvasContext = canvas.getContext("2d");
 let strokes: MarkerLine[] = [];
@@ -357,7 +366,6 @@ exportButton.addEventListener("click", () => {
             sticker.display(exportContext);
         });
 
-        // Trigger download as a PNG
         const anchor = document.createElement("a");
         anchor.href = exportCanvas.toDataURL("image/png");
         anchor.download = "sketchpad.png";
