@@ -1,11 +1,16 @@
 import "./style.css";
 
 class MarkerLine {
-    points: { x: number; y: number }[];
-    thickness: number;
-    color: string;
+  points: { x: number; y: number }[];
+  thickness: number;
+  color: string;
 
-  constructor(initialX: number, initialY: number, thickness: number, color: string) {
+  constructor(
+    initialX: number,
+    initialY: number,
+    thickness: number,
+    color: string
+  ) {
     this.points = [{ x: initialX, y: initialY }];
     this.thickness = thickness;
     this.color = color;
@@ -33,71 +38,86 @@ class MarkerLine {
 }
 
 class ToolPreview {
-    x: number;
-    y: number;
-    thickness: number;
-    rotation: number;
-  
-    constructor(x: number, y: number, thickness: number, rotation: number) {
-      this.x = x;
-      this.y = y;
-      this.thickness = thickness;
-      this.rotation = rotation;
-    }
-  
-    updatePosition(x: number, y: number) {
-      this.x = x;
-      this.y = y;
-    }
+  x: number;
+  y: number;
+  thickness: number;
+  rotation: number;
 
-    updateRotation(rotation: number) {
-      this.rotation = rotation;
-    }
-  
-    display(canvasContext: CanvasRenderingContext2D) {
-      canvasContext.beginPath();
-      canvasContext.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
-      canvasContext.strokeStyle = "black";
-      canvasContext.rotate((this.rotation * Math.PI) / 180);
-      canvasContext.lineWidth = 1;
-      canvasContext.stroke();
-      canvasContext.closePath();
-    }
+  constructor(x: number, y: number, thickness: number, rotation: number) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+    this.rotation = rotation;
+  }
+
+  updatePosition(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  updateRotation(rotation: number) {
+    this.rotation = rotation;
+  }
+
+  display(canvasContext: CanvasRenderingContext2D) {
+    canvasContext.beginPath();
+    canvasContext.arc(this.x, this.y, this.thickness / 2, 0, 2 * Math.PI);
+    canvasContext.strokeStyle = "black";
+    canvasContext.rotate((this.rotation * Math.PI) / 180);
+    canvasContext.lineWidth = 1;
+    canvasContext.stroke();
+    canvasContext.closePath();
+  }
 }
 
 class Sticker {
-    x: number;
-    y: number;
-    sticker: string;
-    rotation: number;
+  x: number;
+  y: number;
+  sticker: string;
+  rotation: number;
 
-    constructor(x: number, y: number, sticker: string, rotation: number) {
-        this.x = x;
-        this.y = y;
-        this.sticker = sticker;
-        this.rotation = rotation;
-    }
+  constructor(x: number, y: number, sticker: string, rotation: number) {
+    this.x = x;
+    this.y = y;
+    this.sticker = sticker;
+    this.rotation = rotation;
+  }
 
-    drag(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
+  drag(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
 
-    display(canvasContext: CanvasRenderingContext2D) {
-        canvasContext.save();
+  display(canvasContext: CanvasRenderingContext2D) {
+    canvasContext.save();
 
-        canvasContext.translate(this.x, this.y);
-        canvasContext.rotate((this.rotation * Math.PI) / 180);
+    canvasContext.translate(this.x, this.y);
+    canvasContext.rotate((this.rotation * Math.PI) / 180);
 
-        canvasContext.font = "40px serif";
-        canvasContext.fillText(this.sticker, 0, 0);
-        canvasContext.strokeStyle = "black";
-        canvasContext.lineWidth = 1;
-        canvasContext.strokeText(this.sticker, 0, 0);
+    canvasContext.font = "40px serif";
+    canvasContext.fillText(this.sticker, 0, 0);
+    canvasContext.strokeStyle = "black";
+    canvasContext.lineWidth = 1;
+    canvasContext.strokeText(this.sticker, 0, 0);
 
-        canvasContext.restore();
-    }
+    canvasContext.restore();
+  }
 }
+
+const CONFIG = {
+  canvas: {
+    width: 256,
+    height: 256,
+  },
+  exportCanvas: {
+    width: 1024,
+    height: 1024,
+  },
+  ui: {
+    colorPickerDefault: "#000000",
+    defaultThickness: 5,
+  },
+};
 
 const APP_NAME = "Drawing Board";
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -119,8 +139,8 @@ layoutContainer.appendChild(leftButtonContainer);
 
 // DRAWING CANVAS
 const canvas = document.createElement("canvas");
-canvas.width = 256;
-canvas.height = 256;
+canvas.width = CONFIG.canvas.width;
+canvas.height = CONFIG.canvas.width;
 canvas.id = "gameCanvas";
 
 // THIN BUTTON
@@ -139,7 +159,7 @@ leftButtonContainer.appendChild(thickButton);
 // COLOR PICKER
 const colorPicker = document.createElement("input");
 colorPicker.type = "color";
-colorPicker.value = "#000000";
+colorPicker.value = CONFIG.ui.colorPickerDefault;
 leftButtonContainer.appendChild(colorPicker);
 
 layoutContainer.appendChild(canvas);
@@ -152,22 +172,22 @@ layoutContainer.appendChild(rightButtonContainer);
 let stickers: string[] = ["😊", "💩", "👍"];
 
 function createStickerButtons() {
-    stickers.forEach((sticker, index) => {
-        const stickerButton = document.createElement("button");
-        stickerButton.innerText = sticker;
-        stickerButton.id = `stickerButton${index}`;
-        stickerButton.addEventListener("click", () => {
-            currentSticker = sticker;
-            displaySticker = null;
-            randomizeStickerRotation();
-        });
-        rightButtonContainer.appendChild(stickerButton);
+  stickers.forEach((sticker, index) => {
+    const stickerButton = document.createElement("button");
+    stickerButton.innerText = sticker;
+    stickerButton.id = `stickerButton${index}`;
+    stickerButton.addEventListener("click", () => {
+      currentSticker = sticker;
+      displaySticker = null;
+      randomizeStickerRotation();
     });
+    rightButtonContainer.appendChild(stickerButton);
+  });
 }
 
 function randomizeStickerRotation() {
-    const randomRotation = Math.floor(Math.random() * 360);
-    displaySticker = new Sticker(0, 0, currentSticker!, randomRotation);
+  const randomRotation = Math.floor(Math.random() * 360);
+  displaySticker = new Sticker(0, 0, currentSticker!, randomRotation);
 }
 
 createStickerButtons();
@@ -177,13 +197,13 @@ const customStickerButton = document.createElement("button");
 customStickerButton.innerText = "Add Custom Sticker";
 customStickerButton.id = "customStickerButton";
 customStickerButton.addEventListener("click", () => {
-    const userSticker = prompt("Enter your custom sticker:", "");
-    if (userSticker) {
-        stickers.push(userSticker);
-        rightButtonContainer.innerHTML = "";
-        createStickerButtons();
-        rightButtonContainer.appendChild(customStickerButton);
-    }
+  const userSticker = prompt("Enter your custom sticker:", "");
+  if (userSticker) {
+    stickers.push(userSticker);
+    rightButtonContainer.innerHTML = "";
+    createStickerButtons();
+    rightButtonContainer.appendChild(customStickerButton);
+  }
 });
 rightButtonContainer.appendChild(customStickerButton);
 
@@ -221,155 +241,174 @@ let placedStickers: Sticker[] = [];
 
 // THIN BUTTON EVENT
 thinButton.addEventListener("click", () => {
-    currentThickness = 5;
-    toolPreview = new ToolPreview(0, 0, currentThickness, 0);
-    updateSelectedTool(thinButton);
+  currentThickness = CONFIG.ui.defaultThickness;
+  toolPreview = new ToolPreview(0, 0, currentThickness, 0);
+  updateSelectedTool(thinButton);
 });
 
 // THICK BUTTON EVENT
 thickButton.addEventListener("click", () => {
-    currentThickness = 10;
-    toolPreview = new ToolPreview(0, 0, currentThickness, 0);
-    updateSelectedTool(thickButton);
+  currentThickness = 10;
+  toolPreview = new ToolPreview(0, 0, currentThickness, 0);
+  updateSelectedTool(thickButton);
 });
 
 // CHANGE SELECTED THICKNESS BUTTON
 function updateSelectedTool(selectedButton: HTMLButtonElement) {
-    document.querySelectorAll(".selectedTool").forEach((btn) => {
-        btn.classList.remove("selectedTool");
-    });
-    selectedButton.classList.add("selectedTool");
+  document.querySelectorAll(".selectedTool").forEach((btn) => {
+    btn.classList.remove("selectedTool");
+  });
+  selectedButton.classList.add("selectedTool");
 }
 
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
-    if(!currentSticker) {
-        const selectedColor = colorPicker.value;
-        currentStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness, selectedColor);
-        toolPreview = null;
-    }
-    else {
-        displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker, displaySticker!.rotation);
-        placedStickers.push(displaySticker);
-        currentSticker = null;
-        canvas.dispatchEvent(new Event("drawing-changed"));
-    }
+  if (!currentSticker) {
+    const selectedColor = colorPicker.value;
+    currentStroke = new MarkerLine(
+      e.offsetX,
+      e.offsetY,
+      currentThickness,
+      selectedColor
+    );
+    toolPreview = null;
+  } else {
+    displaySticker = new Sticker(
+      e.offsetX,
+      e.offsetY,
+      currentSticker,
+      displaySticker!.rotation
+    );
+    placedStickers.push(displaySticker);
+    currentSticker = null;
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
 });
 
 // MOUSE MOVEMENT
 canvas.addEventListener("mousemove", (e) => {
-    if (currentStroke) {
-        currentStroke.drag(e.offsetX, e.offsetY);
-        canvas.dispatchEvent(new Event("drawing-changed"));
-    } else if (currentSticker) {
-        if (!displaySticker) {
-            displaySticker = new Sticker(e.offsetX, e.offsetY, currentSticker, displaySticker!.rotation);
-        } else {
-            displaySticker.drag(e.offsetX, e.offsetY);
-        }
-        canvas.dispatchEvent(new Event("tool-moved"));
+  if (currentStroke) {
+    currentStroke.drag(e.offsetX, e.offsetY);
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  } else if (currentSticker) {
+    if (!displaySticker) {
+      displaySticker = new Sticker(
+        e.offsetX,
+        e.offsetY,
+        currentSticker,
+        displaySticker!.rotation
+      );
     } else {
-        if (!toolPreview) {
-            toolPreview = new ToolPreview(e.offsetX, e.offsetY, currentThickness, toolPreview!.rotation);
-        } else {
-            toolPreview.updatePosition(e.offsetX, e.offsetY);
-        }
-        canvas.dispatchEvent(new Event("tool-moved"));
+      displaySticker.drag(e.offsetX, e.offsetY);
     }
+    canvas.dispatchEvent(new Event("tool-moved"));
+  } else {
+    if (!toolPreview) {
+      toolPreview = new ToolPreview(
+        e.offsetX,
+        e.offsetY,
+        currentThickness,
+        toolPreview!.rotation
+      );
+    } else {
+      toolPreview.updatePosition(e.offsetX, e.offsetY);
+    }
+    canvas.dispatchEvent(new Event("tool-moved"));
+  }
 });
 
 // MOUSE UP
 canvas.addEventListener("mouseup", () => {
-    if (currentStroke) {
-        strokes.push(currentStroke);
-        currentStroke = null;
-        redoStack = [];
-        canvas.dispatchEvent(new Event("drawing-changed"));
-    }
+  if (currentStroke) {
+    strokes.push(currentStroke);
+    currentStroke = null;
+    redoStack = [];
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
 });
 
 // MOUSE NOT IN CANVAS EVENT
 canvas.addEventListener("mouseleave", () => {
-    if (currentStroke) {
-        strokes.push(currentStroke);
-        currentStroke = null;
-        redoStack = [];
-        canvas.dispatchEvent(new Event("drawing-changed"));
-    }
+  if (currentStroke) {
+    strokes.push(currentStroke);
+    currentStroke = null;
+    redoStack = [];
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
 });
 
 // drawing-changed EVENT
 canvas.addEventListener("drawing-changed", () => {
-    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
+  canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
 
-    strokes.forEach((stroke) => {
-        stroke.display(canvasContext!);
-    });
+  strokes.forEach((stroke) => {
+    stroke.display(canvasContext!);
+  });
 
-    if(currentStroke) {
-        currentStroke.display(canvasContext!);
-    }
+  if (currentStroke) {
+    currentStroke.display(canvasContext!);
+  }
 
-    toolPreview?.display(canvasContext!);
+  toolPreview?.display(canvasContext!);
 
-    if (displaySticker) {
-        displaySticker.display(canvasContext!);
-    }
+  if (displaySticker) {
+    displaySticker.display(canvasContext!);
+  }
 
-    placedStickers.forEach((sticker) => {
-        sticker.display(canvasContext!);
-    });
+  placedStickers.forEach((sticker) => {
+    sticker.display(canvasContext!);
+  });
 });
 
 // tool-moved EVENT
 canvas.addEventListener("tool-moved", () => {
-    canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
-  
-    strokes.forEach((stroke) => {
-      stroke.display(canvasContext!);
-    });
-  
-    placedStickers.forEach((sticker) => {
-        sticker.display(canvasContext!);
-    });
+  canvasContext?.clearRect(0, 0, canvas.width, canvas.height);
 
-    toolPreview?.display(canvasContext!);
+  strokes.forEach((stroke) => {
+    stroke.display(canvasContext!);
+  });
 
-    if (currentSticker && displaySticker) {
-        displaySticker.display(canvasContext!);
-    }
+  placedStickers.forEach((sticker) => {
+    sticker.display(canvasContext!);
+  });
+
+  toolPreview?.display(canvasContext!);
+
+  if (currentSticker && displaySticker) {
+    displaySticker.display(canvasContext!);
+  }
 });
 
 // CLEAR BUTTON EVENT
 clearButton.addEventListener("click", () => {
-    strokes = [];
-    redoStack = [];
-    placedStickers = [];
-    currentSticker = null;
-    displaySticker = null;
-    canvas.dispatchEvent(new Event("drawing-changed"));
+  strokes = [];
+  redoStack = [];
+  placedStickers = [];
+  currentSticker = null;
+  displaySticker = null;
+  canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // UNDO BUTTON EVENT
 undoButton.addEventListener("click", () => {
-    if (strokes.length > 0) {
-        const undoneStroke = strokes.pop();
-        if (undoneStroke) {
-            redoStack.push(undoneStroke);
-            canvas.dispatchEvent(new Event("drawing-changed"));
-        }
+  if (strokes.length > 0) {
+    const undoneStroke = strokes.pop();
+    if (undoneStroke) {
+      redoStack.push(undoneStroke);
+      canvas.dispatchEvent(new Event("drawing-changed"));
     }
+  }
 });
 
 // REDO BUTTON EVENT
 redoButton.addEventListener("click", () => {
-    if (redoStack.length > 0) {
-        const redoneStroke = redoStack.pop();
-        if (redoneStroke) {
-            strokes.push(redoneStroke);
-            canvas.dispatchEvent(new Event("drawing-changed"));
-        }
+  if (redoStack.length > 0) {
+    const redoneStroke = redoStack.pop();
+    if (redoneStroke) {
+      strokes.push(redoneStroke);
+      canvas.dispatchEvent(new Event("drawing-changed"));
     }
+  }
 });
 
 // EXPORT BUTTON
@@ -380,25 +419,25 @@ app.appendChild(exportButton);
 
 // EXPORT BUTTON EVENT
 exportButton.addEventListener("click", () => {
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = 1024;
-    exportCanvas.height = 1024;
-    const exportContext = exportCanvas.getContext("2d");
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = CONFIG.exportCanvas.width;
+  exportCanvas.height = CONFIG.exportCanvas.width;
+  const exportContext = exportCanvas.getContext("2d");
 
-    if (exportContext) {
-        exportContext.scale(4, 4);
+  if (exportContext) {
+    exportContext.scale(4, 4);
 
-        strokes.forEach((stroke) => {
-            stroke.display(exportContext);
-        });
+    strokes.forEach((stroke) => {
+      stroke.display(exportContext);
+    });
 
-        placedStickers.forEach((sticker) => {
-            sticker.display(exportContext);
-        });
+    placedStickers.forEach((sticker) => {
+      sticker.display(exportContext);
+    });
 
-        const anchor = document.createElement("a");
-        anchor.href = exportCanvas.toDataURL("image/png");
-        anchor.download = "sketchpad.png";
-        anchor.click();
-    }
+    const anchor = document.createElement("a");
+    anchor.href = exportCanvas.toDataURL("image/png");
+    anchor.download = "sketchpad.png";
+    anchor.click();
+  }
 });
