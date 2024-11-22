@@ -5,12 +5,7 @@ class MarkerLine {
   thickness: number;
   color: string;
 
-  constructor(
-    initialX: number,
-    initialY: number,
-    thickness: number,
-    color: string
-  ) {
+  constructor(initialX: number, initialY: number, thickness: number, color: string) {
     this.points = [{ x: initialX, y: initialY }];
     this.thickness = thickness;
     this.color = color;
@@ -143,18 +138,21 @@ canvas.width = CONFIG.canvas.width;
 canvas.height = CONFIG.canvas.width;
 canvas.id = "gameCanvas";
 
-// THIN BUTTON
-const thinButton = document.createElement("button");
-thinButton.innerText = "Thin";
-thinButton.id = "thinButton";
-thinButton.classList.add("selectedTool");
-leftButtonContainer.appendChild(thinButton);
+// THICKNESS SLIDER TITLE
+const sliderTitle = document.createElement("label");
+sliderTitle.htmlFor = "thicknessSlider";
+sliderTitle.innerText = "Brush Thickness:";
+leftButtonContainer.appendChild(sliderTitle);
 
-// THICK BUTTON
-const thickButton = document.createElement("button");
-thickButton.innerText = "Thick";
-thickButton.id = "thickButton";
-leftButtonContainer.appendChild(thickButton);
+// THICKNESS SLIDER
+const thicknessSlider = document.createElement("input");
+thicknessSlider.type = "range";
+thicknessSlider.min = "1";  // Minimum thickness
+thicknessSlider.max = "20";  // Maximum thickness
+thicknessSlider.value = CONFIG.ui.defaultThickness.toString();  // Default thickness
+thicknessSlider.id = "thicknessSlider";
+thicknessSlider.classList.add("slider");
+leftButtonContainer.appendChild(thicknessSlider);
 
 // COLOR PICKER
 const colorPicker = document.createElement("input");
@@ -239,27 +237,14 @@ let currentSticker: string | null = null;
 let displaySticker: Sticker | null = null;
 let placedStickers: Sticker[] = [];
 
-// THIN BUTTON EVENT
-thinButton.addEventListener("click", () => {
-  currentThickness = CONFIG.ui.defaultThickness;
-  toolPreview = new ToolPreview(0, 0, currentThickness, 0);
-  updateSelectedTool(thinButton);
+// THICKNESS SLIDER EVENT
+thicknessSlider.addEventListener("input", () => {
+  currentThickness = parseInt(thicknessSlider.value);
+  if (toolPreview) {
+    toolPreview.thickness = currentThickness;
+    canvas.dispatchEvent(new Event("tool-moved"));  // Trigger tool moved to update the preview
+  }
 });
-
-// THICK BUTTON EVENT
-thickButton.addEventListener("click", () => {
-  currentThickness = 10;
-  toolPreview = new ToolPreview(0, 0, currentThickness, 0);
-  updateSelectedTool(thickButton);
-});
-
-// CHANGE SELECTED THICKNESS BUTTON
-function updateSelectedTool(selectedButton: HTMLButtonElement) {
-  document.querySelectorAll(".selectedTool").forEach((btn) => {
-    btn.classList.remove("selectedTool");
-  });
-  selectedButton.classList.add("selectedTool");
-}
 
 // MOUSE DOWN
 canvas.addEventListener("mousedown", (e) => {
@@ -308,10 +293,11 @@ canvas.addEventListener("mousemove", (e) => {
         e.offsetX,
         e.offsetY,
         currentThickness,
-        toolPreview!.rotation
+        0
       );
     } else {
       toolPreview.updatePosition(e.offsetX, e.offsetY);
+      toolPreview.thickness = currentThickness;  // Update the preview thickness on move
     }
     canvas.dispatchEvent(new Event("tool-moved"));
   }
